@@ -27,12 +27,19 @@ public class Main {
     static JList list_price = new JList();
     static DefaultListModel listModel_price = new DefaultListModel();
 
+    //Update list Price
+    static JList list_price_updated = new JList();
+    static DefaultListModel listModel_price_updated = new DefaultListModel();
+
     //Receipt List
     static JList list_receipt = new JList();
     static DefaultListModel listModel_receipt = new DefaultListModel();
 
     //Creating an object of class
     static item item_obj;
+
+    static int m; //total price
+    static int u; //updated price
 
     //---------------------------//MAIN//-----------------------------------//
     public static void main(String[] args) {
@@ -136,8 +143,9 @@ public class Main {
 
                 list_receipt.setVisible(true);
                 total_price.setVisible(true);
-                int m = getTotalPrice();
-                total_price.setText("Total amount: " + m);
+                m = getTotalPrice();
+                u = getUpdatedPrice();
+                total_price.setText("Total amount: " + (m+u));
 
             }
         });
@@ -170,9 +178,12 @@ public class Main {
             public void actionPerformed(ActionEvent e) {
 
                 int i = table.getSelectedRow();
+                String amount = tableModel.getValueAt(i, 3).toString();
+                int amount_int = Integer.parseInt(amount);
 
                 if(i >= 0)
                 {
+
                     //setting new values to the table
                     tableModel.setValueAt(name.getText(), i, 1);
                     tableModel.setValueAt(quantity.getText(), i, 2);
@@ -190,10 +201,21 @@ public class Main {
                     listModel.addElement("Updated Item: "+name_item+","+quantity_item_int+","+price_item_updated+" with ID "+id_item+" On date " +item_obj.getDate());
                     list.setModel(listModel);
 
+
+                    if(price_item_updated>amount_int){
+                        listModel_price_updated.addElement(price_item_updated-amount_int);
+                    }
+                    else{
+                        listModel_price_updated.addElement(-(amount_int-price_item_updated));
+                    }
+                    list_price_updated.setModel(listModel_price_updated);
+
+
                 }
                 else{
                     System.out.println("Update Error");
                 }
+                //System.out.println(amount);
             }
         });
 
@@ -284,6 +306,16 @@ public class Main {
             sum+=number;
         }
 
+
+        return sum;
+    }
+
+    public static int getUpdatedPrice(){
+        int sum = 0;
+        for(int x = 0; x < listModel_price_updated.getSize(); x++) {
+            int number = (int) listModel_price_updated.getElementAt(x);
+            sum+=number;
+        }
 
         return sum;
     }
