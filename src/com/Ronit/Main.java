@@ -1,7 +1,10 @@
 package com.Ronit;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -20,7 +23,12 @@ public class Main {
     static JTable table = new JTable(tableModel);
 
     //main frame
-    static JFrame f = new JFrame();
+    static JFrame f = new JFrame("Inventory Management System");
+
+    //labels
+    static JLabel transaction_label = new JLabel();
+    static JLabel receipt_label= new JLabel();
+    static JLabel main_label= new JLabel();
 
     //Transaction List
     static JList list = new JList();
@@ -41,6 +49,10 @@ public class Main {
     //Delete price list
     static JList list_price_deleted = new JList();
     static DefaultListModel listModel_price_deleted = new DefaultListModel();
+
+    //Row sorter
+    static TableRowSorter sorter = new TableRowSorter<>(tableModel);
+
 
     //Creating an object of class
     static item item_obj;
@@ -65,9 +77,19 @@ public class Main {
         f.add(new JScrollPane(table));
 
         table.setGridColor(Color.lightGray);
+        table.setRowSorter(sorter);
+
+        //setting labels
+        transaction_label.setText("Transaction history");
+        transaction_label.setOpaque(true);
+        transaction_label.setVisible(true);
+
+
+
 
         //Initializing Text Fields
         JTextField id = new JTextField();
+        JTextField search = new HintTextField("Search here");
         JTextField name = new HintTextField("Enter name");
         JTextField quantity = new HintTextField("Enter quantity");
         JTextField price = new HintTextField("Enter price");
@@ -80,44 +102,49 @@ public class Main {
         JButton btnReceipt = new JButton("Receipt");
 
         //setting bounds to text fields
-        id.setBounds(20, 220, 100, 25);
-        name.setBounds(20, 220, 100, 25);
-        quantity.setBounds(20, 250, 100, 25);
-        price.setBounds(20, 280, 100, 25);
+        id.setBounds(50, 270, 100, 25);
+        name.setBounds(50, 270, 100, 25);
+        quantity.setBounds(50, 300, 100, 25);
+        price.setBounds(50, 330, 100, 25);
+        search.setBounds(50, 10, 150, 25);
 
         //setting bounds and visibility to the final price
         total_price.setBounds(400, 510, 300, 25);
         total_price.setVisible(false);
 
         //setting bounds to the buttons
-        btnAdd.setBounds(150, 220, 100, 25);
-        btnUpdate.setBounds(150, 265, 100, 25);
-        btnDelete.setBounds(150, 310, 100, 25);
-        btnReceipt.setBounds(150, 355, 100, 25);
+        btnAdd.setBounds(200, 270, 100, 25);
+        btnUpdate.setBounds(200, 315, 100, 25);
+        btnDelete.setBounds(200, 360, 100, 25);
+        btnReceipt.setBounds(200, 405, 100, 25);
 
 
         //Adding scroll panes to the lists and tables
         JScrollPane pane = new JScrollPane(table);
-        pane.setBounds(0, 0, 880, 200);
+        pane.setBounds(50, 50, 880, 200);
         JScrollPane scrollPane_transaction  = new JScrollPane(list, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane_transaction.setBounds(400, 210, 500, 100);
+        scrollPane_transaction.setBounds(400, 270, 500, 100);
+        transaction_label.setLabelFor(scrollPane_transaction);
+
         JScrollPane scrollPane_receipt  = new JScrollPane(list_receipt, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane_receipt.setBounds(400, 400, 300, 100);
         scrollPane_receipt.setVisible(false);
 
 
-        //adding all components to main frame
+        //Adding all components to main frame
         //panes and lists
         f.setLayout(null);
         f.add(pane);
         f.add(scrollPane_transaction);
         f.add(scrollPane_receipt);
+        f.add(transaction_label);
 
         //textFields
         f.add(name);
         f.add(quantity);
         f.add(price);
         f.add(total_price);
+        f.add(search);
 
         //Buttons
         f.add(btnAdd);
@@ -125,9 +152,33 @@ public class Main {
         f.add(btnUpdate);
         f.add(btnReceipt);
 
+
         listModel_receipt.addElement("ITEM-------QUANTITY-------PRICE-------DATE");
         list_receipt.setModel(listModel_receipt);
 
+        search.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                search(search.getText());
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                search(search.getText());
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                search(search.getText());
+            }
+            public void search(String str) {
+                if (str.length() == 0) {
+                    sorter.setRowFilter(null);
+                } else {
+                    sorter.setRowFilter(RowFilter.regexFilter(str));
+                }
+            }
+        });
 
         //mouse on click listener, gives parameters of clicked row
         table.addMouseListener(new MouseAdapter() {
