@@ -1,6 +1,9 @@
 package com.Ronit;
 
+import com.mysql.cj.protocol.Resultset;
+
 import javax.swing.*;
+import java.sql.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
@@ -14,6 +17,9 @@ import java.util.*;
 
 public class Main {
 
+    static final String USER = "root";
+    static final String PASS = "Gandhi_op16";
+
     //ONLY STATICS HERE//
 
     static Scanner sc = new Scanner(System.in);
@@ -25,10 +31,6 @@ public class Main {
     //main frame
     static JFrame f = new JFrame("Inventory Management System");
 
-    //labels
-    static JLabel transaction_label = new JLabel();
-    static JLabel receipt_label= new JLabel();
-    static JLabel main_label= new JLabel();
 
     //Transaction List
     static JList list = new JList();
@@ -51,20 +53,33 @@ public class Main {
     static DefaultListModel listModel_price_deleted = new DefaultListModel();
 
     //Row sorter
-    static TableRowSorter sorter = new TableRowSorter<>(tableModel);
+    //static TableRowSorter sorter = new TableRowSorter<>(tableModel);
 
 
     //Creating an object of class
     static item item_obj;
 
+    static ArrayList list_total_price = new ArrayList();
     static int m; //total price
+    static int c; //sql get total price *************
     static int u; //updated price
     static int d; //deleted price
-    static  int x; //index of list_receipt
     static int get_row; //get row when mouse click
 
     //---------------------------//MAIN//-----------------------------------//
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException, ClassNotFoundException {
+
+        //DATABASE CONNECTION
+        Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/javamini?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC",USER,PASS);
+        //SQL statements to GET from db
+        PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM mainframe");
+        PreparedStatement preparedStatement1 = connection.prepareStatement("SELECT * FROM transactionhist");
+
+        //Result object
+        ResultSet rs = preparedStatement.executeQuery();
+        ResultSet rs1 = preparedStatement1.executeQuery();
+        DefaultTableModel tableModel1 = (DefaultTableModel) table.getModel();
+        tableModel1.setRowCount(0);
 
         //Adding columns
         tableModel.addColumn("Id");
@@ -76,16 +91,9 @@ public class Main {
         f.setSize(550, 350);
         f.add(new JScrollPane(table));
 
+
         table.setGridColor(Color.lightGray);
-        table.setRowSorter(sorter);
-
-        //setting labels
-        transaction_label.setText("Transaction history");
-        transaction_label.setOpaque(true);
-        transaction_label.setVisible(true);
-
-
-
+        //table.setRowSorter(sorter); //sorter
 
         //Initializing Text Fields
         JTextField id = new JTextField();
@@ -101,6 +109,7 @@ public class Main {
         JButton btnUpdate = new JButton("Update");
         JButton btnReceipt = new JButton("Receipt");
 
+        //UI STARTS-------->
         //setting bounds to text fields
         id.setBounds(50, 270, 100, 25);
         name.setBounds(50, 270, 100, 25);
@@ -124,8 +133,6 @@ public class Main {
         pane.setBounds(50, 50, 880, 200);
         JScrollPane scrollPane_transaction  = new JScrollPane(list, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane_transaction.setBounds(400, 270, 500, 100);
-        transaction_label.setLabelFor(scrollPane_transaction);
-
         JScrollPane scrollPane_receipt  = new JScrollPane(list_receipt, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane_receipt.setBounds(400, 400, 300, 100);
         scrollPane_receipt.setVisible(false);
@@ -137,7 +144,6 @@ public class Main {
         f.add(pane);
         f.add(scrollPane_transaction);
         f.add(scrollPane_receipt);
-        f.add(transaction_label);
 
         //textFields
         f.add(name);
@@ -152,10 +158,32 @@ public class Main {
         f.add(btnUpdate);
         f.add(btnReceipt);
 
+        //UI ENDS------>
 
         listModel_receipt.addElement("ITEM-------QUANTITY-------PRICE-------DATE");
         list_receipt.setModel(listModel_receipt);
 
+        //Data entry to main frame from database
+        while (rs.next()) {
+            int i = rs.getInt("id");
+            String d = rs.getString("name_");
+            int e = rs.getInt("quantity");
+            int f = rs.getInt("price");
+            String h = rs.getString("date_");
+            c = c + f;
+            tableModel1.addRow(new Object[]{i, d, e, f, h});
+        }
+        total_price.setText("Total amount: " + c);  //initially setting the total price
+
+        //Data entry to transaction hist from database
+        while (rs1.next()){
+            String history = rs1.getString("history_");
+            listModel.addElement(history);
+            list.setModel(listModel);
+        }
+
+        //BUTTON AND TEXT FUNCTIONS AND ACTIONS
+        /*
         search.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -178,7 +206,7 @@ public class Main {
                     sorter.setRowFilter(RowFilter.regexFilter(str));
                 }
             }
-        });
+        }); */ //work on the search function.---------------IMP
 
         //mouse on click listener, gives parameters of clicked row
         table.addMouseListener(new MouseAdapter() {
@@ -192,13 +220,6 @@ public class Main {
             }
             });
 
-        list_receipt.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                x = list_receipt.getSelectedIndex();
-            }
-        });
-
         //Receipt Button Action
         btnReceipt.addActionListener(new ActionListener() {
             @Override
@@ -209,8 +230,18 @@ public class Main {
                 m = getTotalPrice();
                 u = getUpdatedPrice();
                 d = getDeletedPrice();
-                total_price.setText("Total amount: " + ((m+u)-d));
+/*
+                for(int i = 0;i<table.getModel().getRowCount();i++)
+                {
+                    list_total_price.add(table.getModel().getValueAt(i,3));
 
+                }
+                int sum =0;
+                for (int m =0;m<table.getModel().getRowCount();m++){
+                    System.out.println(Integer.parseInt(String.valueOf(list_total_price.get(m))));
+                }
+*/
+                total_price.setText("Total amount: " + ((m+c+u)-d));
             }
         });
 
@@ -227,16 +258,37 @@ public class Main {
                 int quantity_item_int = Integer.parseInt(quantity_item);
                 int price_item_deleted = Integer.parseInt(price_item);
 
+                item_obj = new item(name_item, quantity_item_int, price_item_deleted);
+                item_obj.setDate();
                 //Transaction History List
                 listModel.addElement("Removed Item: "+name_item+","+quantity_item_int+","+price_item_deleted+"On date "+item_obj.getDate()+ " with ID"+id_item);
                 list.setModel(listModel);
 
-                //deleted price
+                //Delete from database
+                String query_delete = "DELETE FROM mainframe WHERE id= ?;";
+                try {
+                    PreparedStatement preparedStmt = connection.prepareStatement(query_delete);
+                    preparedStmt.setInt(1,(get_row+1));
+                    preparedStmt.execute();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+                //Add to trans hist db
+                String tran_query = "INSERT INTO transactionhist(history_) VALUES (?)";
+                try {
+                    PreparedStatement preparedStatement1 = connection.prepareStatement(tran_query);
+                    preparedStatement1.setString(1, "Deleted Item: "+name_item+","+quantity_item_int+","+price_item_deleted+" with ID "+id_item+" On date " +item_obj.getDate());
+                    preparedStatement1.execute();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+
+                //Deleted price
                 listModel_price_deleted.addElement(price_item_deleted);
                 list_price_deleted.setModel(listModel_price_deleted);
 
                 //receipt list
-                listModel_receipt.remove(get_row+1);
+                //listModel_receipt.remove(get_row+1);
 
 
             }
@@ -268,11 +320,22 @@ public class Main {
                     int quantity_item_int = Integer.parseInt(quantity_item);
                     int price_item_updated = Integer.parseInt(price_item);
 
+                    item_obj = new item(name_item, quantity_item_int, price_item_updated );
+                    item_obj.setDate();
                     //Transaction History List (appending the updated values)
                     listModel.addElement("Updated Item: "+name_item+","+quantity_item_int+","+price_item_updated+" with ID "+id_item+" On date " +item_obj.getDate());
                     list.setModel(listModel);
+                    //Add to trans hist db
+                    String tran_query = "INSERT INTO transactionhist(history_) VALUES (?)";
+                    try {
+                        PreparedStatement preparedStatement1 = connection.prepareStatement(tran_query);
+                        preparedStatement1.setString(1, "Updated Item: "+name_item+","+quantity_item_int+","+price_item_updated+" with ID "+id_item+" On date " +item_obj.getDate());
+                        preparedStatement1.execute();
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    }
 
-                    //updated price list
+                    //Updated price list
                     if(price_item_updated>amount_int){
                         listModel_price_updated.addElement(price_item_updated-amount_int);
                     }
@@ -282,7 +345,20 @@ public class Main {
                     list_price_updated.setModel(listModel_price_updated);
 
                     //receipt list
-                    listModel_receipt.set(get_row+1, "Updated -- "+name_item+"-------"+quantity_item_int+"-------"+price_item_updated+"-------"+item_obj.getDate());
+                    //listModel_receipt.set(get_row+1, "Updated -- "+name_item+"-------"+quantity_item_int+"-------"+price_item_updated+"-------"+item_obj.getDate());
+
+                    //Updating mainframe db
+                    String query_update = "UPDATE mainframe SET name_ = ?, quantity = ?, price = ? WHERE id= ?;";
+                    try {
+                        PreparedStatement preparedStmt = connection.prepareStatement(query_update);
+                        preparedStmt.setString(1,name_item);
+                        preparedStmt.setInt(2,quantity_item_int);
+                        preparedStmt.setInt(3,price_item_updated);
+                        preparedStmt.setInt(4,(get_row+1));
+                        preparedStmt.execute();
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    }
 
 
                 }
@@ -306,7 +382,15 @@ public class Main {
 
                 //setting parameters to object variables
                 item_obj = new item(name_item, quantity_item_int, price_item_int );
-                item_obj.setId();
+
+                if(tableModel.getRowCount()>0){
+                    int row = tableModel.getRowCount();
+                    int m = Integer.parseInt(String.valueOf(tableModel.getValueAt(row-1, 0)));
+                    item_obj.setId(m+1);
+                }else {
+                    item_obj.setId(1);
+                }
+
                 item_obj.setName(name_item);
                 item_obj.setQuantity(quantity_item_int);
                 item_obj.setPrice(price_item_int);
@@ -314,18 +398,40 @@ public class Main {
 
                 //appending row to the table
                 tableModel.addRow(new Object[]{item_obj.getId(), item_obj.getName(), item_obj.getQuantity(), item_obj.getPrice(), item_obj.getDate()});
-
+                //appending row to Db
+                String query1 = "INSERT INTO mainframe (id, name_, quantity, price, date_ ) VALUES ( ?,?,?,?,?)";
+                try {
+                    PreparedStatement preparedStmt = connection.prepareStatement(query1);
+                    preparedStmt.setInt(1, item_obj.getId());
+                    preparedStmt.setString(2 ,item_obj.getName());
+                    preparedStmt.setInt(3, item_obj.getQuantity());
+                    preparedStmt.setInt(4, item_obj.getPrice());
+                    preparedStmt.setString(5, item_obj.getDate());
+                    preparedStmt.execute();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
                 //Transaction History List
                 listModel.addElement("Added Item: "+name_item+","+quantity_item_int+","+price_item_int+" with ID "+item_obj.getId()+ " On date "+item_obj.getDate());
                 list.setModel(listModel);
+                //Transaction history db
+                String tran_query = "INSERT INTO transactionhist(history_) VALUES (?)";
+                try {
+                    PreparedStatement preparedStatement1 = connection.prepareStatement(tran_query);
+                    preparedStatement1.setString(1, "Added Item: "+name_item+","+quantity_item_int+","+price_item_int+" with ID "+item_obj.getId()+" On date " +item_obj.getDate());
+                    preparedStatement1.execute();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
 
                 //Total Price List
                 listModel_price.addElement(price_item_int);
                 list_price.setModel(listModel_price);
 
                 //Receipt List
-                listModel_receipt.addElement(name_item+"-------"+quantity_item_int+"-------"+price_item_int+"-------"+item_obj.getDate());
-                list_receipt.setModel(listModel_receipt);
+                //listModel_receipt.addElement(name_item+"-------"+quantity_item_int+"-------"+price_item_int+"-------"+item_obj.getDate());
+                //list_receipt.setModel(listModel_receipt);
+
 
                 name.setText("");
                 quantity.setText("");
@@ -354,9 +460,7 @@ public class Main {
                     System.out.println("Invalid choice! Please make a valid choice. \n\n");
             }
         }
-
     }
-
 
     //print list method , which starts the GUI ------ Important method
     public static void printList(){
@@ -402,5 +506,4 @@ public class Main {
         }
         return sum;
     }
-
 }

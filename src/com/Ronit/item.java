@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class item {
-    private static AtomicInteger ID_GENERATOR = new AtomicInteger(1);
+    private static AtomicInteger ID_GENERATOR;
     static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/uuuu");
     static LocalDate localDate = LocalDate.now();
     int id;
@@ -25,9 +25,9 @@ public class item {
         return id;
     }
 
-    public void setId() {
+    public void setId(int initialValue) {
+        ID_GENERATOR = new AtomicInteger(initialValue);
         id = ID_GENERATOR.getAndIncrement();
-
     }
 
     public String getName() {
