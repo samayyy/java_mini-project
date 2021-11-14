@@ -40,10 +40,6 @@ public class Main {
     static JList list_price = new JList();
     static DefaultListModel listModel_price = new DefaultListModel();
 
-    //Receipt List
-    static JList list_receipt = new JList();
-    static DefaultListModel listModel_receipt = new DefaultListModel();
-
     //Update list Price
     static JList list_price_updated = new JList();
     static DefaultListModel listModel_price_updated = new DefaultListModel();
@@ -133,9 +129,7 @@ public class Main {
         pane.setBounds(50, 50, 880, 200);
         JScrollPane scrollPane_transaction  = new JScrollPane(list, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane_transaction.setBounds(400, 270, 500, 100);
-        JScrollPane scrollPane_receipt  = new JScrollPane(list_receipt, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane_receipt.setBounds(400, 400, 300, 100);
-        scrollPane_receipt.setVisible(false);
+
 
 
         //Adding all components to main frame
@@ -143,7 +137,7 @@ public class Main {
         f.setLayout(null);
         f.add(pane);
         f.add(scrollPane_transaction);
-        f.add(scrollPane_receipt);
+
 
         //textFields
         f.add(name);
@@ -160,8 +154,6 @@ public class Main {
 
         //UI ENDS------>
 
-        listModel_receipt.addElement("ITEM-------QUANTITY-------PRICE-------DATE");
-        list_receipt.setModel(listModel_receipt);
 
         //Data entry to main frame from database
         while (rs.next()) {
@@ -225,7 +217,7 @@ public class Main {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                scrollPane_receipt.setVisible(true);
+
                 total_price.setVisible(true);
                 m = getTotalPrice();
                 u = getUpdatedPrice();
@@ -255,6 +247,7 @@ public class Main {
                 String name_item = name.getText();
                 String quantity_item = quantity.getText();
                 String price_item = price.getText();
+                int id_item_int = Integer.parseInt(id_item);
                 int quantity_item_int = Integer.parseInt(quantity_item);
                 int price_item_deleted = Integer.parseInt(price_item);
 
@@ -264,16 +257,16 @@ public class Main {
                 listModel.addElement("Removed Item: "+name_item+","+quantity_item_int+","+price_item_deleted+"On date "+item_obj.getDate()+ " with ID"+id_item);
                 list.setModel(listModel);
 
-                //Delete from database
+                //Delete from database mainframe table
                 String query_delete = "DELETE FROM mainframe WHERE id= ?;";
                 try {
                     PreparedStatement preparedStmt = connection.prepareStatement(query_delete);
-                    preparedStmt.setInt(1,(get_row+1));
+                    preparedStmt.setInt(1,(id_item_int));
                     preparedStmt.execute();
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                 }
-                //Add to trans hist db
+                //Inserting transaction into transaction history table in DB
                 String tran_query = "INSERT INTO transactionhist(history_) VALUES (?)";
                 try {
                     PreparedStatement preparedStatement1 = connection.prepareStatement(tran_query);
@@ -283,13 +276,9 @@ public class Main {
                     ex.printStackTrace();
                 }
 
-                //Deleted price
+                //Deleted price appended to list
                 listModel_price_deleted.addElement(price_item_deleted);
                 list_price_deleted.setModel(listModel_price_deleted);
-
-                //receipt list
-                //listModel_receipt.remove(get_row+1);
-
 
             }
         });
@@ -322,10 +311,12 @@ public class Main {
 
                     item_obj = new item(name_item, quantity_item_int, price_item_updated );
                     item_obj.setDate();
+
                     //Transaction History List (appending the updated values)
                     listModel.addElement("Updated Item: "+name_item+","+quantity_item_int+","+price_item_updated+" with ID "+id_item+" On date " +item_obj.getDate());
                     list.setModel(listModel);
-                    //Add to trans hist db
+
+                    //Add transaction to transaction history table in db
                     String tran_query = "INSERT INTO transactionhist(history_) VALUES (?)";
                     try {
                         PreparedStatement preparedStatement1 = connection.prepareStatement(tran_query);
@@ -344,10 +335,7 @@ public class Main {
                     }
                     list_price_updated.setModel(listModel_price_updated);
 
-                    //receipt list
-                    //listModel_receipt.set(get_row+1, "Updated -- "+name_item+"-------"+quantity_item_int+"-------"+price_item_updated+"-------"+item_obj.getDate());
-
-                    //Updating mainframe db
+                    //Updating mainframe table in db
                     String query_update = "UPDATE mainframe SET name_ = ?, quantity = ?, price = ? WHERE id= ?;";
                     try {
                         PreparedStatement preparedStmt = connection.prepareStatement(query_update);
@@ -390,15 +378,16 @@ public class Main {
                 }else {
                     item_obj.setId(1);
                 }
-
+                //setting object parameters
                 item_obj.setName(name_item);
                 item_obj.setQuantity(quantity_item_int);
                 item_obj.setPrice(price_item_int);
                 item_obj.setDate();
 
-                //appending row to the table
+                //Appending row to the table
                 tableModel.addRow(new Object[]{item_obj.getId(), item_obj.getName(), item_obj.getQuantity(), item_obj.getPrice(), item_obj.getDate()});
-                //appending row to Db
+
+                //Appending row to Db mainframe table
                 String query1 = "INSERT INTO mainframe (id, name_, quantity, price, date_ ) VALUES ( ?,?,?,?,?)";
                 try {
                     PreparedStatement preparedStmt = connection.prepareStatement(query1);
@@ -411,10 +400,12 @@ public class Main {
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                 }
-                //Transaction History List
+
+                //Inserting transaction into transaction history list
                 listModel.addElement("Added Item: "+name_item+","+quantity_item_int+","+price_item_int+" with ID "+item_obj.getId()+ " On date "+item_obj.getDate());
                 list.setModel(listModel);
-                //Transaction history db
+
+                //Inserting transaction into transaction history table in DB
                 String tran_query = "INSERT INTO transactionhist(history_) VALUES (?)";
                 try {
                     PreparedStatement preparedStatement1 = connection.prepareStatement(tran_query);
@@ -424,15 +415,11 @@ public class Main {
                     ex.printStackTrace();
                 }
 
-                //Total Price List
+                //Adding price to total price list
                 listModel_price.addElement(price_item_int);
                 list_price.setModel(listModel_price);
 
-                //Receipt List
-                //listModel_receipt.addElement(name_item+"-------"+quantity_item_int+"-------"+price_item_int+"-------"+item_obj.getDate());
-                //list_receipt.setModel(listModel_receipt);
-
-
+                //Setting the textFields to blank
                 name.setText("");
                 quantity.setText("");
                 price.setText("");
