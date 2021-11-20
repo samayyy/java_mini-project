@@ -12,12 +12,14 @@ public class item {
     String name;
     int quantity;
     int price;
+    String supplier;
     String date;
 
-    public item( String name, int quantity, int price) {
+    public item( String name, int quantity, int price, String supplier) {
         this.name = name;
         this.quantity = quantity;
         this.price = price;
+        this.supplier = supplier;
 
     }
 
@@ -61,4 +63,13 @@ public class item {
     public void setDate() {
         date = dtf.format(localDate);
     }
+
+    public String getSupplier() {
+        return supplier;
+    }
+
+    public void setSupplier(String supplier) {
+        this.supplier = supplier;
+    }
 }
+
