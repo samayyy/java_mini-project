@@ -2,6 +2,7 @@ package com.Ronit;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -20,9 +21,14 @@ public class Main {
 
     static Scanner sc = new Scanner(System.in);
 
+    static Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+    static Color customColor = new Color(184, 207, 229);
+
     //main table
     static DefaultTableModel tableModel = new DefaultTableModel();
     static JTable table = new JTable(tableModel);
+    //table header
+    static JTableHeader tableHeader = table.getTableHeader();
 
     //main frame
     static JFrame f = new JFrame("Inventory Management System");
@@ -61,17 +67,31 @@ public class Main {
     //---------------------------//MAIN//-----------------------------------//
     public static void main(String[] args) throws SQLException {
 
-        //DATABASE CONNECTION
+        // //DATABASE CONNECTION
         Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/javamini?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC",USER,PASS);
-        //SQL statements to GET from db
+        // //SQL statements to GET from db
         PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM mainframe");
         PreparedStatement preparedStatement1 = connection.prepareStatement("SELECT * FROM transactionhist");
 
-        //Result object
+        // //Result object
         ResultSet rs = preparedStatement.executeQuery();
         ResultSet rs1 = preparedStatement1.executeQuery();
+        JLabel label = new JLabel("Inventory Management System");
+
+        JFrame.setDefaultLookAndFeelDecorated(true);
+        int screenHeight = screenSize.height;
+        int screenWidth = screenSize.width;
+        f.setSize(screenWidth, screenHeight);
+        f.add(new JScrollPane(table));
+
         DefaultTableModel tableModel1 = (DefaultTableModel) table.getModel();
         tableModel1.setRowCount(0);
+        table.setRowHeight(30);
+        table.setBackground(customColor);
+        table.setForeground(Color.black);
+        tableHeader.setBackground(Color.black);
+        tableHeader.setForeground(Color.white);
+        table.setSelectionBackground(Color.lightGray);
 
         //Adding columns
         tableModel.addColumn("Id");
@@ -81,11 +101,7 @@ public class Main {
         tableModel.addColumn("Date");
         tableModel.addColumn("Supplier");
 
-        f.setSize(550, 350);
-        f.add(new JScrollPane(table));
-
-
-        table.setGridColor(Color.lightGray);
+        table.setGridColor(Color.white);
         table.setRowSorter(sorter); //sorter
 
         //Initializing Text Fields
@@ -96,7 +112,7 @@ public class Main {
         JTextField price = new HintTextField("Enter price");
         JTextField total_price = new JTextField();
 
-        //dropdown function for supplier --Test
+        //dropdown function for supplier
         String[] s = { "Amazon Fresh", "FreshFoods", "Amazon Wholesale", "Flipkart", "Grofers","BigBasket" };
         JComboBox<String> supplier = new JComboBox<>(s);
         supplier.setSelectedIndex(0);
@@ -106,33 +122,40 @@ public class Main {
         JButton btnDelete = new JButton("Delete");
         JButton btnUpdate = new JButton("Update");
         JButton btnReceipt = new JButton("Receipt");
-
         //UI STARTS-------->
         //setting bounds to text fields
-        id.setBounds(50, 270, 100, 25);
-        name.setBounds(50, 270, 100, 25);
-        quantity.setBounds(50, 300, 100, 25);
-        price.setBounds(50, 330, 100, 25);
-        supplier.setBounds(50, 360, 100, 25);
-        search.setBounds(50, 10, 150, 25);
+        int boundx = (screenWidth - 880)/2;
+        id.setBounds(boundx, 370, 150, 25);
+        name.setBounds(boundx, 370, 150, 25);
+        quantity.setBounds(boundx, 415, 150, 25);
+        price.setBounds(boundx, 460, 150, 25);
+        supplier.setBounds(boundx, 505, 150, 25);
+        search.setBounds(boundx, 110, 880, 25);
 
         //setting bounds and visibility to the final price
-        total_price.setBounds(400, 510, 300, 25);
+        total_price.setBounds((boundx+355), 505, 525, 25);
         total_price.setVisible(false);
 
         //setting bounds to the buttons
-        btnAdd.setBounds(200, 270, 100, 25);
-        btnUpdate.setBounds(200, 315, 100, 25);
-        btnDelete.setBounds(200, 360, 100, 25);
-        btnReceipt.setBounds(200, 405, 100, 25);
+        btnAdd.setBounds((boundx+180), 370, 120, 25);
+        btnUpdate.setBounds((boundx+180), 415, 120, 25);
+        btnDelete.setBounds((boundx+180), 460, 120, 25);
+        btnReceipt.setBounds((boundx+180), 505, 120, 25);
 
         //Adding scroll panes to the lists and tables
         JScrollPane pane = new JScrollPane(table);
-        pane.setBounds(50, 50, 880, 200);
+        pane.setBounds(boundx, 150, 880, 200);
         JScrollPane scrollPane_transaction  = new JScrollPane(list, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane_transaction.setBounds(400, 270, 600, 100);
+        scrollPane_transaction.setBounds((boundx+355), 370, 525, 100);
+        
+        //setting bounds and font-size for label
+        label.setBounds((boundx+225), 40, 500, 35);
+        label.setFont (label.getFont ().deriveFont (28.0f));
 
         //Adding all components to main frame
+        //label
+        f.add(label);
+
         //panes and lists
         f.setLayout(null);
         f.add(pane);
@@ -151,7 +174,7 @@ public class Main {
         f.add(btnDelete);
         f.add(btnUpdate);
         f.add(btnReceipt);
-
+        
         //UI ENDS------>
 
 
@@ -208,7 +231,6 @@ public class Main {
                 supplier.setSelectedItem(tableModel.getValueAt(get_row,5).toString());
             }
             });
-
 
         //Receipt Button Action
         btnReceipt.addActionListener(e -> {
